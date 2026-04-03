@@ -36,18 +36,25 @@
         }
         .view-list .empty-cell { display: none; }
         .view-list .no-event { display: none; }
-        .view-calendar .day-name-label { display: none; }
-        @media (max-width: 768px) {
-            .view-calendar .day-name-label { display: inline; }
+        
+        .view-calendar { 
+            width: 100%;
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; /* 부드러운 스크롤 */
         }
+        .view-calendar .calendar-grid { 
+            min-width: 768px; /* 표가 찌그러지지 않도록 최소 너비 고정 */
+        }
+        .view-calendar .day-name-label { display: none; }
+        
         .badge {
             display: inline-block;
-            padding: 0.15rem 0.4rem;
+            padding: 0.15rem 0.35rem;
             border-radius: 0.25rem;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             margin-bottom: 0.25rem;
-            word-break: keep-all;
+            white-space: nowrap; /* 뱃지 글자 깨짐 방지 */
         }
         .badge-transport { background-color: #dbeafe; color: #1e40af; }
         .badge-event { background-color: #dcfce3; color: #166534; }
@@ -81,7 +88,7 @@
         </div>
 
         <!-- Calendar -->
-        <div id="calendar-container" class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 view-calendar">
+        <div id="calendar-container" class="bg-white rounded-xl shadow-sm border border-slate-200 view-calendar">
             <!-- Day Headers (Desktop only) -->
             <div class="calendar-grid calendar-header-row bg-slate-100 font-semibold text-slate-600 text-sm text-center">
                 <div class="py-3 text-red-600">일</div>
@@ -217,13 +224,13 @@
                 }
 
                 html += `
-                    <div class="bg-slate-50 p-2 rounded border border-slate-100 text-sm hover:border-slate-300 transition-colors">
-                        <div class="flex items-start gap-1.5 mb-1">
+                    <div class="bg-slate-50 p-1.5 md:p-2 rounded border border-slate-100 text-xs md:text-sm hover:border-slate-300 transition-colors word-break-words">
+                        <div class="flex items-start gap-1 mb-1 flex-wrap">
                             <span class="badge ${badgeClass} shrink-0">${ev.time}</span>
-                            <span class="font-bold text-slate-800 leading-tight pt-0.5">${ev.title}</span>
+                            <span class="font-bold text-slate-800 leading-tight pt-0.5 break-keep">${ev.title}</span>
                         </div>
                         ${statusBadge}
-                        ${ev.notes ? `<div class="text-xs text-slate-500 mt-1.5 flex items-start gap-1"><span class="text-slate-400">└</span> ${ev.notes}</div>` : ''}
+                        ${ev.notes ? `<div class="text-xs text-slate-500 mt-1 flex items-start gap-1 break-keep"><span class="text-slate-400">└</span> ${ev.notes}</div>` : ''}
                     </div>
                 `;
             });
