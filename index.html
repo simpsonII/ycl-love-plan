@@ -20,23 +20,25 @@
             min-height: 120px;
             padding: 0.5rem;
         }
+        .view-list .calendar-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            background-color: transparent;
+            border: none;
+        }
+        .view-list .calendar-header-row { display: none; }
+        .view-list .calendar-cell {
+            min-height: auto;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .view-list .empty-cell { display: none; }
+        .view-list .no-event { display: none; }
+        .view-calendar .day-name-label { display: none; }
         @media (max-width: 768px) {
-            .calendar-grid {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-                background-color: transparent;
-                border: none;
-            }
-            .calendar-header-row { display: none; }
-            .calendar-cell {
-                min-height: auto;
-                border-radius: 0.5rem;
-                border: 1px solid #e2e8f0;
-                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            }
-            .calendar-cell.empty-cell { display: none; }
-            .calendar-cell.no-event-mobile { display: none; }
+            .view-calendar .day-name-label { display: inline; }
         }
         .badge {
             display: inline-block;
@@ -70,13 +72,16 @@
             </div>
         </header>
 
-        <!-- View Toggle (Visible only on mobile for clarity) -->
-        <div class="md:hidden mb-4 text-sm text-slate-500 bg-blue-50 p-3 rounded-lg border border-blue-100">
-            📱 모바일 화면에서는 일정이 있는 날짜만 목록 형태로 표시됩니다.
+        <!-- View Toggle -->
+        <div class="mb-4 flex justify-end">
+            <div class="inline-flex bg-slate-200 p-1 rounded-lg">
+                <button id="btn-view-calendar" class="px-4 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm text-slate-800 transition-all">달력형</button>
+                <button id="btn-view-list" class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-800 transition-all">목록형</button>
+            </div>
         </div>
 
         <!-- Calendar -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+        <div id="calendar-container" class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 view-calendar">
             <!-- Day Headers (Desktop only) -->
             <div class="calendar-grid calendar-header-row bg-slate-100 font-semibold text-slate-600 text-sm text-center">
                 <div class="py-3 text-red-600">일</div>
@@ -140,7 +145,7 @@
                 { time: "17:15", title: "삼척 → 동서울 (버스)", type: "transport", status: "✅ 예약 완료", notes: "창업동아리 마감, 양주 이동" }
             ],
             11: [
-                { time: "-", title: "LFD 참관", type: "event", notes: "일정 이후 채린과 수원 숙박" }
+                { time: "-", title: "LFD 참관", type: "event", notes: "일정 이후 수원 숙박" }
             ],
             12: [
                 { time: "13:10", title: "수원 → 삼척 (버스)", type: "transport", status: "✅ 예약 완료" }
@@ -149,8 +154,8 @@
                 { time: "07:25", title: "삼척 → 동서울 (버스)", type: "transport", status: "✅ 예약 완료", notes: "회암사지 축제 (15시 옥정호수공원)" }
             ],
             18: [
-                { time: "05:00", title: "용산역 이동 (집 출발)", type: "transport" },
-                { time: "07:14", title: "용산 → 대전 (ITX)", type: "transport", status: "✅ 예약 완료", notes: "대전 이동" }
+                { time: "10:00", title: "제4기 찾아가는 대학생멘토단 OT", type: "event", notes: "장학재단 회의실" },
+                { time: "15:03", title: "용산 → 대전 (ITX)", type: "transport", status: "✅ 예약 완료", notes: "대전 이동" }
             ],
             19: [
                 { time: "14:15", title: "대전복합 → 삼척 (버스)", type: "transport", status: "✅ 예약 완료", notes: "직행 복귀" }
@@ -183,8 +188,8 @@
             const events = scheduleData[day] || [];
             
             const cell = document.createElement('div');
-            // 일정이 없는 날은 모바일에서 숨기기 위한 클래스 추가
-            cell.className = `calendar-cell flex flex-col ${events.length === 0 ? 'no-event-mobile' : ''}`;
+            // 일정이 없는 날은 목록형에서 숨기기 위한 클래스 추가
+            cell.className = `calendar-cell flex flex-col ${events.length === 0 ? 'no-event' : ''}`;
             
             let dayColorClass = 'text-slate-700';
             if (currentDayOfWeek === 0) dayColorClass = 'text-red-600';
@@ -193,7 +198,7 @@
             // 날짜 표시
             let html = `
                 <div class="flex justify-between items-center mb-2 md:mb-1">
-                    <span class="font-bold md:font-semibold text-lg md:text-sm ${dayColorClass}">${day}일 <span class="md:hidden text-sm font-normal text-slate-500 ml-1">${dayNames[currentDayOfWeek]}요일</span></span>
+                    <span class="font-bold md:font-semibold text-lg md:text-sm ${dayColorClass}">${day}일 <span class="day-name-label text-sm font-normal text-slate-500 ml-1">${dayNames[currentDayOfWeek]}요일</span></span>
                 </div>
                 <div class="flex flex-col gap-1.5 flex-1">
             `;
@@ -227,6 +232,28 @@
             cell.innerHTML = html;
             calendarBody.appendChild(cell);
         }
+
+        // View Toggle Logic
+        const btnCalendar = document.getElementById('btn-view-calendar');
+        const btnList = document.getElementById('btn-view-list');
+        const calendarContainer = document.getElementById('calendar-container');
+
+        function setView(view) {
+            if (view === 'calendar') {
+                calendarContainer.classList.remove('view-list');
+                calendarContainer.classList.add('view-calendar');
+                btnCalendar.className = 'px-4 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm text-slate-800 transition-all';
+                btnList.className = 'px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-800 transition-all';
+            } else {
+                calendarContainer.classList.remove('view-calendar');
+                calendarContainer.classList.add('view-list');
+                btnList.className = 'px-4 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm text-slate-800 transition-all';
+                btnCalendar.className = 'px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-800 transition-all';
+            }
+        }
+
+        btnCalendar.addEventListener('click', () => setView('calendar'));
+        btnList.addEventListener('click', () => setView('list'));
     </script>
 </body>
 </html>
