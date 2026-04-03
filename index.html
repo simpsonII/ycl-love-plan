@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026년 4월 일정 및 교통 현황</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', sans-serif; }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 1px;
+            background-color: #e2e8f0;
+            border: 1px solid #e2e8f0;
+        }
+        .calendar-cell {
+            background-color: white;
+            min-height: 120px;
+            padding: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .calendar-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                background-color: transparent;
+                border: none;
+            }
+            .calendar-header-row { display: none; }
+            .calendar-cell {
+                min-height: auto;
+                border-radius: 0.5rem;
+                border: 1px solid #e2e8f0;
+                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            }
+            .calendar-cell.empty-cell { display: none; }
+            .calendar-cell.no-event-mobile { display: none; }
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            word-break: keep-all;
+        }
+        .badge-transport { background-color: #dbeafe; color: #1e40af; }
+        .badge-event { background-color: #dcfce3; color: #166534; }
+        .badge-deadline { background-color: #fee2e2; color: #991b1b; }
+        .badge-warning { background-color: #fef9c3; color: #854d0e; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased p-2 md:p-6">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-6 flex flex-col md:flex-row md:items-end justify-between bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                    📅 2026년 4월 일정
+                </h1>
+                <p class="text-slate-500 mt-2 text-sm md:text-base">교통편 예약 내역 및 주요 일정 현황입니다.</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex gap-2 text-sm font-medium">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full">🚌 예약완료 6건</span>
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">⚠️ 예매필요 1건</span>
+            </div>
+        </header>
+
+        <!-- View Toggle (Visible only on mobile for clarity) -->
+        <div class="md:hidden mb-4 text-sm text-slate-500 bg-blue-50 p-3 rounded-lg border border-blue-100">
+            📱 모바일 화면에서는 일정이 있는 날짜만 목록 형태로 표시됩니다.
+        </div>
+
+        <!-- Calendar -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+            <!-- Day Headers (Desktop only) -->
+            <div class="calendar-grid calendar-header-row bg-slate-100 font-semibold text-slate-600 text-sm text-center">
+                <div class="py-3 text-red-600">일</div>
+                <div class="py-3">월</div>
+                <div class="py-3">화</div>
+                <div class="py-3">수</div>
+                <div class="py-3">목</div>
+                <div class="py-3">금</div>
+                <div class="py-3 text-blue-600">토</div>
+            </div>
+
+            <!-- Calendar Days will be injected here by JS -->
+            <div id="calendar-body" class="calendar-grid"></div>
+        </div>
+
+        <!-- Checklists -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-lg mb-3 flex items-center gap-2">📝 창업동아리</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    팀원들에게 <strong class="text-slate-900">4/7(화)</strong>까지 재학증명서(JPG) 및 경력사항 제출 재공지 요망
+                </p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-lg mb-3 flex items-center gap-2">🏆 공모전</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    <strong class="text-slate-900">4/24(금) 17시</strong> 헌혈공모전 최종 접수 (승우와 협업)
+                </p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-lg mb-3 flex items-center gap-2">🎨 디자인</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    5~6월 디자인어워드 대비<br>화분 + 옷걸이 + 스텝퍼 아이템 구체화
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scheduleData = {
+            3: [
+                { time: "11:37", title: "KDM+ 1차 합격자 발표", type: "event", notes: "정승우, 이지영 합격 확인" },
+                { time: "19:00", title: "삼척 → 수원 (버스)", type: "transport", status: "✅ 예약 완료", notes: "카메라 지참, UI/인포, 오산 이동" }
+            ],
+            4: [
+                { time: "종일", title: "경참위 워크숍", type: "event", notes: "사진 촬영, 2차 정책 제출" }
+            ],
+            5: [
+                { time: "16:00", title: "수원 → 삼척 (버스)", type: "transport", status: "✅ 예약 완료" }
+            ],
+            6: [
+                { time: "-", title: "경기문화재단 발표", type: "event", notes: "비상임이사 합격 여부 확인" }
+            ],
+            7: [
+                { time: "-", title: "창업동아리 서류 마감", type: "deadline", notes: "팀원 경력/증빙자료 취합 마감" }
+            ],
+            9: [
+                { time: "-", title: "창업동아리 제출일", type: "deadline", notes: "서류 최종 점검" }
+            ],
+            10: [
+                { time: "17:15", title: "삼척 → 동서울 (버스)", type: "transport", status: "✅ 예약 완료", notes: "창업동아리 마감, 양주 이동" }
+            ],
+            11: [
+                { time: "-", title: "LFD 참관", type: "event", notes: "일정 이후 채린과 수원 숙박" }
+            ],
+            12: [
+                { time: "13:10", title: "수원 → 삼척 (버스)", type: "transport", status: "✅ 예약 완료" }
+            ],
+            17: [
+                { time: "07:25", title: "삼척 → 동서울 (버스)", type: "transport", status: "✅ 예약 완료", notes: "회암사지 축제 (15시 옥정호수공원)" }
+            ],
+            18: [
+                { time: "05:00", title: "용산역 이동 (집 출발)", type: "transport" },
+                { time: "07:14", title: "용산 → 대전 (ITX)", type: "transport", status: "✅ 예약 완료", notes: "대전 이동" }
+            ],
+            19: [
+                { time: "14:15", title: "대전복합 → 삼척 (버스)", type: "transport", status: "✅ 예약 완료", notes: "직행 복귀" }
+            ],
+            24: [
+                { time: "종일", title: "KDM+ 강원권 교육", type: "event", notes: "1박 2일 교육 / 헌혈공모전 마감" }
+            ],
+            25: [
+                { time: "미정", title: "교육 종료 후 삼척 이동", type: "transport", status: "⚠️ 예매 필요", notes: "버스 시간 확인 및 예약 필요" }
+            ]
+        };
+
+        const calendarBody = document.getElementById('calendar-body');
+        
+        // 2026년 4월은 수요일(3) 시작, 30일까지 있음
+        const startDayOfWeek = 3; 
+        const totalDays = 30;
+
+        // 빈 칸 채우기 (일, 월, 화)
+        for (let i = 0; i < startDayOfWeek; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'calendar-cell empty-cell bg-slate-50';
+            calendarBody.appendChild(emptyCell);
+        }
+
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+        for (let day = 1; day <= totalDays; day++) {
+            const currentDayOfWeek = (startDayOfWeek + day - 1) % 7;
+            const events = scheduleData[day] || [];
+            
+            const cell = document.createElement('div');
+            // 일정이 없는 날은 모바일에서 숨기기 위한 클래스 추가
+            cell.className = `calendar-cell flex flex-col ${events.length === 0 ? 'no-event-mobile' : ''}`;
+            
+            let dayColorClass = 'text-slate-700';
+            if (currentDayOfWeek === 0) dayColorClass = 'text-red-600';
+            if (currentDayOfWeek === 6) dayColorClass = 'text-blue-600';
+
+            // 날짜 표시
+            let html = `
+                <div class="flex justify-between items-center mb-2 md:mb-1">
+                    <span class="font-bold md:font-semibold text-lg md:text-sm ${dayColorClass}">${day}일 <span class="md:hidden text-sm font-normal text-slate-500 ml-1">${dayNames[currentDayOfWeek]}요일</span></span>
+                </div>
+                <div class="flex flex-col gap-1.5 flex-1">
+            `;
+
+            // 일정 렌더링
+            events.forEach(ev => {
+                let badgeClass = '';
+                if (ev.type === 'transport') badgeClass = 'badge-transport';
+                else if (ev.type === 'deadline') badgeClass = 'badge-deadline';
+                else badgeClass = 'badge-event';
+
+                let statusBadge = '';
+                if (ev.status) {
+                    const isWarning = ev.status.includes('⚠️');
+                    statusBadge = `<span class="badge ${isWarning ? 'badge-warning' : 'bg-emerald-50 text-emerald-700'} mt-1 block w-max">${ev.status}</span>`;
+                }
+
+                html += `
+                    <div class="bg-slate-50 p-2 rounded border border-slate-100 text-sm hover:border-slate-300 transition-colors">
+                        <div class="flex items-start gap-1.5 mb-1">
+                            <span class="badge ${badgeClass} shrink-0">${ev.time}</span>
+                            <span class="font-bold text-slate-800 leading-tight pt-0.5">${ev.title}</span>
+                        </div>
+                        ${statusBadge}
+                        ${ev.notes ? `<div class="text-xs text-slate-500 mt-1.5 flex items-start gap-1"><span class="text-slate-400">└</span> ${ev.notes}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            cell.innerHTML = html;
+            calendarBody.appendChild(cell);
+        }
+    </script>
+</body>
+</html>
